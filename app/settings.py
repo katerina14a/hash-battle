@@ -8,8 +8,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
+# from __future__ import absolute_import
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -36,6 +39,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'twython_django_oauth',
+    'djcelery',
+    'kombu.transport.django',
+    # 'app.hashbattle',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -105,6 +112,31 @@ STATICFILES_DIRS = (
 )
 
 TEMPLATE_DIRS = (os.path.join(BASE_DIR, '../templates'),)
+
+TWITTER_KEY = 'neWv1SFI1rxBCdaYwa46hQ69V'
+TWITTER_SECRET = 'OwaDRLufUYqa1eWfwxp9hshPMptXOZuyzKmobdgqpsBeX3jjtO'
+
+LOGIN_URL = '/login'
+LOGOUT_URL = '/logout'
+LOGIN_REDIRECT_URL = '/home'
+LOGOUT_REDIRECT_URL = '/'
+
+# CELERY_RESULT_BACKEND = 'djcelery.backends.cache:CacheBackend'
+
+CELERY_TASK_SERIALIZER = "json"
+
+# CELERY_IMPORTS = ("tasks",)
+
+BROKER_URL = 'amqp://guest:guest@localhost//'
+
+CELERY_ACCEPT_CONTENT = ['json']
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+    }
+}
 
 if os.environ.get('DEVELOPMENT', None):
     from settings_dev import *
