@@ -118,8 +118,8 @@ TWITTER_SECRET = 'OwaDRLufUYqa1eWfwxp9hshPMptXOZuyzKmobdgqpsBeX3jjtO'
 
 LOGIN_URL = '/login'
 LOGOUT_URL = '/logout'
-LOGIN_REDIRECT_URL = '/home'
-LOGOUT_REDIRECT_URL = '/home'
+LOGIN_REDIRECT_URL = '/battle'
+LOGOUT_REDIRECT_URL = '/'
 
 # CELERY_RESULT_BACKEND = 'djcelery.backends.cache:CacheBackend'
 

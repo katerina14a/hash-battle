@@ -54,3 +54,8 @@
 #tweet-graph {
     text-align: center;
 }
+
+.carousel-inner {
+    width: 90%;
+    padding-left: 10%;
+}

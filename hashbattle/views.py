@@ -59,6 +59,7 @@ def set_hashtags(request):
     # start the aggregation of tweets into memcache using celery tasks
     save_tweets.delay(hash1, token, secret)
     save_tweets.delay(hash2, token, secret)
+    begin_auth(request)
     return render_to_response('battle.html')
 
 def fetch_hashtags(request):
