@@ -1,3 +1,56 @@
 #title {
     text-align: center;
 }
+
+.tweets {
+    /*height: 35em;*/
+    height: 400px;
+    overflow-y: auto;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.tweet {
+    background-color: aliceblue;
+    margin-bottom: 5px;
+    border-bottom-color: lightblue;
+    border-bottom-style: ridge;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    padding-top: 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+    text-align: center;
+}
+
+.counter {
+    text-align: center;
+}
+
+.counter-style {
+    background-color: darkcyan;
+    color: aliceblue;
+    margin-left: 4em;
+    margin-right: 4em;
+    border-radius: 5px;
+}
+
+.tweets::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    background-color: #F5F5F5;
+}
+
+.tweets::-webkit-scrollbar {
+    width: 6px;
+    background-color: #F5F5F5;
+}
+
+.tweets::-webkit-scrollbar-thumb {
+    background-color: darkcyan;
+}
+
+#tweet-graph {
+    text-align: center;
+}

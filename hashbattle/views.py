@@ -1,5 +1,7 @@
 # import json
 import json
+from app.settings import LOGOUT_REDIRECT_URL
+import os
 from django.core.cache import cache
 from django.shortcuts import render_to_response
 from app.celery import save_tweets
@@ -49,6 +51,12 @@ def set_hashtags(request):
     # call the following 2 lines for each hashtag the user chose in the beginning page
     token = user.oauth_token
     secret = user.oauth_secret
+
+    # remove any tweets in memcached to start fresh
+    cache.delete(hash1)
+    cache.delete(hash2)
+
+    # start the aggregation of tweets into memcache using celery tasks
     save_tweets.delay(hash1, token, secret)
     save_tweets.delay(hash2, token, secret)
     return render_to_response('battle.html')
@@ -164,59 +172,9 @@ def battle(request):
 def home(request):
     return render_to_response('home.html')
 
-    # APP_KEY = 'neWv1SFI1rxBCdaYwa46hQ69V'
-    # APP_SECRET = 'OwaDRLufUYqa1eWfwxp9hshPMptXOZuyzKmobdgqpsBeX3jjtO'
-    #
-    # twitter = Twython(APP_KEY, APP_SECRET)
-    #
-    # auth = twitter.get_authentication_tokens(callback_url='http://http://hash-battle.herokuapp.com/')
-    #
-    # # From the auth variable, save the oauth_token and oauth_token_secret for later use (these are not the final auth
-    # # tokens). In Django or other web frameworks, you might want to store it to a session variable
-    # OAUTH_TOKEN = auth['oauth_token']
-    # OAUTH_TOKEN_SECRET = auth['oauth_token_secret']
-    #
-    # # Send the user to the authentication url, you can obtain it by accessing
-    # auth['auth_url']
-    #
-    # # After they authorize your app to access some of their account details, they'll be redirected to the callback url
-    # # you specified in get_authentication_tokens. You'll want to extract the oauth_verifier from the url
-    # oauth_verifier = request.GET['oauth_verifier']
-    #
-    # # Now that you have the oauth_verifier stored to a variable, you'll want to create a new instance of Twython and
-    # # grab the final user token
-    # twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
-    # final_step = twitter.get_authorized_tokens(oauth_verifier)
-    #
-
-    # user = request.user.twitterprofile
-    # api = TwitterAPI(settings.TWITTER_KEY, settings.TWITTER_SECRET, user.oauth_token, user.oauth_secret)
-    #
-    # r = api.request('statuses/filter', {'track': 'beach'})
-
-    # # counter = 0
-    # for item in r:
-    #     # counter += 1
-    #     # if counter < 2:
-    #     print(item['text'] if 'text' in item else item)
-    #     print "\n\n\n\n\n"
-
-
-    # # # Filtering public statuses
-    # stream = MyStreamer(settings.TWITTER_KEY, settings.TWITTER_SECRET, user.oauth_token, user.oauth_secret)
-    # stream.statuses.filter(track='calabasas')
-    #
-    # twitter = Twython(settings.TWITTER_KEY, settings.TWITTER_SECRET, user.oauth_token, user.oauth_secret)
-    # user_tweets = twitter.get_home_timeline()
-    #
-    # return render_to_response('home.html', {'tweets': user_tweets})
-
-
-# Setting up your streamer
-# class MyStreamer(TwythonStreamer):
-#     def on_success(self, data):
-#         if 'text' in data:
-#             print data['text'].encode('utf-8')
-#
-#     def on_error(self, status_code, data):
-#         print status_code
+def end_battle(request):
+    bash_command = "ps auxww | grep 'celery' | awk '{print $2}' | xargs kill -9"
+    os.system(bash_command)
+    # django_logout(request)
+    return HttpResponseRedirect(request.build_absolute_uri(LOGOUT_REDIRECT_URL))
+    # return HttpResponse(json.dumps({}), content_type="application/json")

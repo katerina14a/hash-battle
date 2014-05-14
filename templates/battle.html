@@ -1,7 +1,50 @@
 {% extends "base.html" %}
 {% block content %}
-    <h2>Tweets</h2>
     <button class="btn" id="confirm-start-battle">Begin Battle</button>
-    <div id="tweets"></div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-8 col-xs-offset-2">
+                <div class="container-fluid">
+                    <div class="row">
+                        <h1 id="title">Twitter Hashtag Battle!</h1>
+                    </div>
+                    <div class="row" id="counters"></div>
+                    <div class="row">
+                        <div id="carousel-view" class="carousel slide" data-ride="carousel">
+                            <!-- Indicators -->
+                            <ol class="carousel-indicators">
+                                <li data-target="#carousel-view" data-slide-to="0" class="active"></li>
+                                <li data-target="#carousel-view" data-slide-to="1"></li>
+                            </ol>
+
+                            <!-- Wrapper for slides -->
+                            <div class="carousel-inner">
+                                <div class="item active">
+                                    <div id="tweets"></div>
+                                </div>
+                                <div class="item">
+                                    <div id="container" style="min-width: 60%; height: 400px; margin: 0 auto"></div>
+{#                                    <canvas id="tweet-graph" width="600" height="400"></canvas>#}
+                                </div>
+                            </div>
+
+                            <!-- Controls -->
+                            <a class="left carousel-control" href="#carousel-view" data-slide="prev">
+                                <span class="glyphicon glyphicon-chevron-left"></span>
+                            </a>
+                            <a class="right carousel-control" href="#carousel-view" data-slide="next">
+                                <span class="glyphicon glyphicon-chevron-right"></span>
+                            </a>
+                        </div>
+
+
+                    </div>
+                    <div class="row">
+                        <a href="/end_battle" class="btn">End Battle</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 {% endblock %}

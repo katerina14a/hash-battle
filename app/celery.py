@@ -23,7 +23,6 @@ def debug_task(self):
     print('Request: {0!r}'.format(self.request))
 
 
-from Queue import Queue
 from django.core.cache import cache
 from TwitterAPI import TwitterAPI
 
@@ -37,6 +36,9 @@ def save_tweets(hashtag, token, secret):
 
     for item in r:
         print item['text'] if 'text' in item else item
+        # print item['profile_image_url_https']
+        # print item['location']
+        # print item['geo_enabled']
         print "\n\n"
 
         # using memcached as a locking mechanism
