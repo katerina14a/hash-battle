@@ -1,33 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
-    <button class="btn" id="confirm-start-battle">Begin Battle</button>
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-8 col-xs-offset-2">
                 <div class="container-fluid">
                     <div class="row">
-                        <h1 id="title">Twitter Hashtag Battle!</h1>
+                        <h1 id="battle-title">Twitter Hashtag Battle!</h1>
                     </div>
                     <div class="row" id="counters"></div>
                     <div class="row">
                         <div id="carousel-view" class="carousel slide" data-ride="carousel">
-                            <!-- Indicators -->
-                            <ol class="carousel-indicators">
-                                <li data-target="#carousel-view" data-slide-to="0" class="active"></li>
-                                <li data-target="#carousel-view" data-slide-to="1"></li>
-                            </ol>
 
-                            <!-- Wrapper for slides -->
+                            <!-- Bootstrap Carousel Content -->
                             <div class="carousel-inner">
                                 <div class="item active">
                                     <div id="tweets"></div>
                                 </div>
                                 <div class="item">
-                                    <div id="graph" style="min-width: 60%; height: 400px; margin: 0 auto"></div>
+                                    <div id="graph" style="min-width: 60%; height: 400px; margin: 0 auto">
+                                        <div id="graph-placeholder">
+                                            <p id="waiting-text" class="col-xs-5 col-xs-offset-3">waiting for tweets to
+                                                display graph</p>
+
+                                            <div class="col-md-2">
+                                                {% load staticfiles %}
+                                                <img id="loading-gif" src="{% static "img/ajax-loader.gif" %}"/>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Controls -->
+                            <!-- Bootstrap Carousel Controls -->
                             <a class="left carousel-control" href="#carousel-view" data-slide="prev">
                                 <span class="glyphicon glyphicon-chevron-left"></span>
                             </a>
@@ -35,12 +39,39 @@
                                 <span class="glyphicon glyphicon-chevron-right"></span>
                             </a>
                         </div>
-
-
                     </div>
+
+
                     <div class="row">
-                        <a href="/end_battle" class="btn">End Battle</a>
+                        <div class="col-xs-2 col-xs-offset-5">
+                            <button id="end-battle-btn" type="button" class="btn btn-primary btn-lg" data-toggle="modal"
+                                    data-target="#end-battle-modal">End Battle
+                            </button>
+                        </div>
                     </div>
+
+                    <!-- End Battle Modal -->
+                    <div class="modal fade" id="end-battle-modal" tabindex="-1" role="dialog"
+                         aria-labelledby="myModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div id="battle-modal" class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal"
+                                            aria-hidden="true">&times;</button>
+                                </div>
+                                <div id="battle-modal-content" class="modal-body">
+                                </div>
+                                <div class="modal-footer">
+                                    <button id="dismiss-modal" type="button" class="btn btn-default"
+                                            data-dismiss="modal">Wait! I wasn't done yet!
+                                    </button>
+                                    <a href="/end_battle" id="confirm-start-battle" class="btn btn-primary">Done</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
                 </div>
             </div>
         </div>

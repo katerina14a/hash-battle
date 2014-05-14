@@ -1,5 +1,5 @@
-# import json
 import json
+import re
 from app.settings import LOGOUT_REDIRECT_URL
 import os
 from django.core.cache import cache
@@ -21,50 +21,62 @@ User = get_user_model()
 # about adapting this to your own setup.
 from twython_django_oauth.models import TwitterProfile
 
-# def get_tweet(request):
-#     """
-#     :param request: GET request from an AJAX call in index.js passing in .............
-#     :return:
-#     """
-#     tag = request.GET
-#     rtn = {
-#         'title': title,
-#         'menus': menus,
-#         'prev': prev_id,
-#         'next': next_id,
-#     }
-#     return HttpResponse(json.simplejson.dumps(rtn), mimetype="application/json")
-
 def set_hashtags(request):
+
+    # TODO: handle less than 2 hashes
+    hash1 = ""
+    hash2 = ""
+    hash3 = ""
+    hash4 = ""
+
+    request.session['hashes'] = []
+
+    # get the hashtag if it was passed in
+    # strip it of any non alphanumeric characters
+    # save it to the session
     if 'hash1' in request.GET:
         hash1 = str(request.GET['hash1'])
+        hash1 = re.sub('[^0-9a-zA-Z]+', '', hash1)
+        request.session['hashes'].append(hash1)
     if 'hash2' in request.GET:
         hash2 = str(request.GET['hash2'])
+        hash2 = re.sub('[^0-9a-zA-Z]+', '', hash2)
+        request.session['hashes'].append(hash2)
+    if 'hash3' in request.GET:
+        hash3 = str(request.GET['hash3'])
+        hash3 = re.sub('[^0-9a-zA-Z]+', '', hash3)
+        request.session['hashes'].append(hash3)
+    if 'hash4' in request.GET:
+        hash4 = str(request.GET['hash4'])
+        hash4 = re.sub('[^0-9a-zA-Z]+', '', hash4)
+        request.session['hashes'].append(hash4)
 
-    # hashes = request.session.get('hashes')
-    # if not hashes:
-    #     hashes = []
-    request.session['hashes'] = [hash1, hash2]
-    print [hash1, hash2]
-
+    # get user data to be able to make the twitter api request
     user = request.user.twitterprofile
-    # call the following 2 lines for each hashtag the user chose in the beginning page
     token = user.oauth_token
     secret = user.oauth_secret
 
-    # remove any tweets in memcached to start fresh
-    cache.delete(hash1)
-    cache.delete(hash2)
+    # remove tweets for the hash already in memcached to start fresh
+    # start the aggregation of tweets into memcached using celery tasks
+    if hash1 != "":
+        cache.delete(hash1)
+        save_tweets.delay(hash1, token, secret)
+    if hash2 != "":
+        cache.delete(hash2)
+        save_tweets.delay(hash2, token, secret)
+    if hash3 != "":
+        cache.delete(hash3)
+        save_tweets.delay(hash3, token, secret)
+    if hash4 != "":
+        cache.delete(hash4)
+        save_tweets.delay(hash4, token, secret)
 
-    # start the aggregation of tweets into memcache using celery tasks
-    save_tweets.delay(hash1, token, secret)
-    save_tweets.delay(hash2, token, secret)
-    begin_auth(request)
     return render_to_response('battle.html')
 
 def fetch_hashtags(request):
     response = {"hashtags": []}
     hashes = request.session.get('hashes')
+    # TODO: if hashes = [], take them back to homepage to enter in the hashes again (error with session)
     for i in range(0, len(hashes)):
         response["hashtags"].append(hashes[i])
     return HttpResponse(json.dumps(response), content_type="application/json")
@@ -73,7 +85,7 @@ def fetch_tweet(request):
     if 'data' in request.GET:
         hashtag = str(request.GET['data'])
 
-    # using memcached as a locking mechanism
+    # using memcached as a locking mechanism to access the tweets
     if cache.add("lock:hashtaglock", "1", 300):
         try:
             if cache.get(hashtag) is None:
@@ -88,7 +100,7 @@ def fetch_tweet(request):
             cache.delete("lock:hashtaglock")
         return HttpResponse(json.dumps(response), content_type="application/json")
     else:
-        # log this
+        # celery has been shutdown
         return HttpResponse(json.dumps({}), content_type="application/json")
 
 
@@ -102,47 +114,35 @@ def logout(request, redirect_url=settings.LOGOUT_REDIRECT_URL):
 
 
 def begin_auth(request):
-    """The view function that initiates the entire handshake.
-
-    For the most part, this is 100% drag and drop.
-    """
-    # Instantiate Twython with the first leg of our trip.
+    # Instantiate Twython
     twitter = Twython(settings.TWITTER_KEY, settings.TWITTER_SECRET)
 
-    # Request an authorization url to send the user to...
-    # callback_url = request.build_absolute_uri(reverse('twython_django_oauth.views.thanks'))
+    # Request an authorization url to send the user to
     callback_url = request.build_absolute_uri(reverse('hashbattle.views.thanks'))
     auth_props = twitter.get_authentication_tokens(callback_url)
 
-    # Then send them over there, durh.
+    # Then send them over there
     request.session['request_token'] = auth_props
     return HttpResponseRedirect(auth_props['auth_url'])
 
 
 def thanks(request, redirect_url=settings.LOGIN_REDIRECT_URL):
-    """A user gets redirected here after hitting Twitter and authorizing your app to use their data.
-
-    This is the view that stores the tokens you want
-    for querying data. Pay attention to this.
-
-    """
-    # Now that we've got the magic tokens back from Twitter, we need to exchange
-    # for permanent ones and store them...
+    # tokens obtained from Twitter
     oauth_token = request.session['request_token']['oauth_token']
     oauth_token_secret = request.session['request_token']['oauth_token_secret']
     twitter = Twython(settings.TWITTER_KEY, settings.TWITTER_SECRET,
                       oauth_token, oauth_token_secret)
 
-    # Retrieve the tokens we want...
+    # retrieving tokens
     authorized_tokens = twitter.get_authorized_tokens(request.GET['oauth_verifier'])
 
-    # If they already exist, grab them, login and redirect to a page displaying stuff.
+    # if tokens already exist, use them to login and redirect to the battle
     try:
         user = User.objects.get(username=authorized_tokens['screen_name'])
         user.set_password(authorized_tokens['oauth_token_secret'])
         user.save()
     except User.DoesNotExist:
-        # We mock a creation here; no email, password is just the token, etc.
+        # mock a creation here; no email, password is just the token, etc. since no need for users in this app
         user = User.objects.create_user(authorized_tokens['screen_name'], "fjdsfn@jfndjfn.com", authorized_tokens['oauth_token_secret'])
         profile = TwitterProfile()
         profile.user = user
@@ -154,28 +154,18 @@ def thanks(request, redirect_url=settings.LOGIN_REDIRECT_URL):
         username=authorized_tokens['screen_name'],
         password=authorized_tokens['oauth_token_secret']
     )
+
     login(request, user)
     return HttpResponseRedirect(redirect_url)
-
-
-def user_timeline(request):
-    """An example view with Twython/OAuth hooks/calls to fetch data about the user in question."""
-    user = request.user.twitterprofile
-    twitter = Twython(settings.TWITTER_KEY, settings.TWITTER_SECRET,
-                      user.oauth_token, user.oauth_secret)
-    user_tweets = twitter.get_home_timeline()
-    return render_to_response('tweets.html', {'tweets': user_tweets})
 
 def battle(request):
     return render_to_response('battle.html')
 
-# Create your views here.
 def home(request):
     return render_to_response('home.html')
 
 def end_battle(request):
+    # shutdown celery workers
     bash_command = "ps auxww | grep 'celery' | awk '{print $2}' | xargs kill -9"
     os.system(bash_command)
-    # django_logout(request)
     return HttpResponseRedirect(request.build_absolute_uri(LOGOUT_REDIRECT_URL))
-    # return HttpResponse(json.dumps({}), content_type="application/json")

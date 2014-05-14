@@ -1,11 +1,19 @@
+body {
+    background-color: #f9f9f9;
+}
+
 #title {
     text-align: center;
 }
 
+#battle-title {
+    text-align: center;
+}
+
 .tweets {
-    /*height: 35em;*/
     height: 400px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-left: 8px;
     padding-right: 8px;
 }
@@ -13,12 +21,8 @@
 .tweet {
     background-color: aliceblue;
     margin-bottom: 5px;
-    border-bottom-color: lightblue;
-    border-bottom-style: ridge;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    border-bottom: ridge lightblue;
+    border-radius: 5px;
     padding-top: 3px;
     padding-left: 10px;
     padding-right: 10px;
@@ -30,11 +34,7 @@
 }
 
 .counter-style {
-    background-color: darkcyan;
-    color: aliceblue;
-    margin-left: 4em;
-    margin-right: 4em;
-    border-radius: 5px;
+    color: #3276b1;
 }
 
 .tweets::-webkit-scrollbar-track {
@@ -48,14 +48,76 @@
 }
 
 .tweets::-webkit-scrollbar-thumb {
-    background-color: darkcyan;
+    background-color: #3276b1;
 }
 
 #tweet-graph {
     text-align: center;
 }
 
-.carousel-inner {
-    width: 90%;
-    padding-left: 10%;
+#dismiss-modal {
+    float: left;
+    margin-right: 25px;
+}
+
+#confirm-start-battle {
+    float: left;
+}
+
+#homepage-modal {
+    width: 28em;
+    left: 8em;
+}
+
+.modal-header .close {
+    margin-top: -9px;
+}
+
+#homepage-modal-content {
+    text-align: center;
+    padding-bottom: 1px;
+}
+
+#end-battle-btn {
+    margin-top: 15px;
+}
+
+#battle-modal {
+    width: 22em;
+    left: 10em;
+}
+
+#battle-modal-content {
+    text-align: center;
+}
+
+.carousel-indicators {
+    display: none;
+}
+
+.carousel-control.left {
+    margin-left: -8em;
+}
+
+.carousel-control.right {
+    margin-right: -8em;
+}
+
+#app-explanation {
+    text-align: center;
+}
+
+#graph-placeholder {
+    text-align: center;
+    padding-top: 9em;
+    padding-left: 4em;
+    clear: left;
+}
+
+#waiting-text {
+    float: left;
+}
+
+#loading-gif {
+    float: left;
 }

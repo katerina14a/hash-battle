@@ -1,12 +1,17 @@
 TweetManager = {
     hashtags: [],
-    categories: [],
     plot_points: [],
+    // returns hashtags and starts off new celery workers for each hashtag
     get_hashtags: function () {
         $.ajax('/fetch_hashtags', {
             dataType: "json",
             success: function (data) {
                 TweetManager.hashtags = data.hashtags;
+
+                while (TweetManager.hashtags.indexOf("") != -1) {
+                    TweetManager.hashtags.splice(TweetManager.hashtags.indexOf(""), 1);
+                }
+
                 var span;
                 if (TweetManager.hashtags.length === 2) {
                     span = 6;
@@ -17,20 +22,21 @@ TweetManager = {
                 }
 
                 for (var i = 0; i < TweetManager.hashtags.length; i++) {
-                    // TODO: make sure the span is correct
                     $('#tweets').append('<div id="t' + i + '" class="col-xs-' + span + ' tweets"></div>');
+
                     $('#counters').append('<div id="counter' + i + '" class="col-xs-' + span + ' counter">' +
-                        '<h2>' + TweetManager.hashtags[i] + '</h2>' +
+                        '<h2>#' + TweetManager.hashtags[i] + '</h2>' +
                         '<h2 id="c' + i + '" class="counter-style">0</h2>' +
                         '</div>');
 
-                    TweetManager.plot_points.push({name: TweetManager.hashtags[i], data: []});
+                    TweetManager.plot_points.push({name: "#" + TweetManager.hashtags[i].toString(), data: []});
 
                     TweetManager.get_new_tweet(TweetManager.hashtags[i], i);
                 }
             }
         })
     },
+    // celery worker brings in batches of tweets and then does it again until the battle ends
     get_new_tweet: function (hash, id) {
         $.ajax('/fetch_tweet', {
             data: {'data': hash},
@@ -44,33 +50,22 @@ TweetManager = {
                 }
             },
             success: function (data) {
-                var dt = new Date();
-                var time = dt.getHours() + ":" + dt.getMinutes() + ":" + dt.getSeconds();
+
+                // increase counter and add tweet to stream
                 var num_new_plot_points = 0;
                 for (var i = 0; i < Object.keys(data).length; i++) {
                     if (data[hash + i.toString()] != '') {
                         $("#t" + id).prepend('<p class="tweet">' + data[hash + i.toString()] + '</p>');
                         var counter = $('#c' + id);
                         counter.html(parseInt(counter.html(), 10) + 1);
-                        // put elements in new list to be added to the existing one
                         num_new_plot_points += 1;
 
                     }
                 }
 
-                console.log("num_new_plot_points= " + num_new_plot_points.toString());
-
                 // add to the existing number of tweets in the last plot point
                 for (var k = 0; k < TweetManager.plot_points.length; k++) {
-                    if (TweetManager.plot_points[k].name === hash) {
-//                        console.log(num_new_plot_points);
-                        console.log(TweetManager.plot_points[k].data);
-
-//                        var unique_points = [];
-//                        $.each(TweetManager.plot_points[k].data, function (i, el) {
-//                            if ($.inArray(el, unique_points) === -1) unique_points.push(el);
-//                        });
-
+                    if (TweetManager.plot_points[k].name === "#" + hash.toString()) {
                         if (TweetManager.plot_points[k].data.length === 0) {
                             TweetManager.plot_points[k].data.push(num_new_plot_points);
                         } else {
@@ -80,39 +75,37 @@ TweetManager = {
                     }
                 }
 
-                // add time if time not there already
-                if (TweetManager.categories.indexOf(time) === -1) {
-                    TweetManager.categories.push(time);
-                    TweetManager.categories.sort();
+                // only redraw the graph if there have been more tweets
+                // still add the unchanged count to preserve the slope of the graph
+                if (num_new_plot_points != 0) {
+                    $('#graph').empty();
+                    TweetManager.draw_graph(TweetManager.plot_points);
                 }
-                console.log(TweetManager.plot_points[k].data);
-                $('#graph').empty();
-                TweetManager.draw_graph(TweetManager.categories, TweetManager.plot_points);
 
+                // recursive call so worker keeps getting more tweets from cache
                 setTimeout(function () {
                     TweetManager.get_new_tweet(hash, id);
-                }, 3000);
+                }, 5000);
             },
-            error: function (hash) {
+            error: function () {
                 console.log("an error has occurred and we have stopped looking for tweets :( ")
             }
         });
     },
-    draw_graph: function (categories, data) {
+    // graph formed with Highcharts
+    draw_graph: function (data) {
         var chart = new Highcharts.Chart({
             chart: {
                 renderTo: 'graph',
-                zoomType: 'xy'
+                zoomType: 'xy',
+                backgroundColor: '#f9f9f9'
             },
             title: {
                 text: 'Number of tweets for each hash',
                 x: -20 //center
             },
             xAxis: {
-//                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                categories: categories,
-                min: 1,
-                max: 20
+                min: 1
             },
             yAxis: {
                 min: 0,
@@ -124,33 +117,11 @@ TweetManager = {
                 verticalAlign: 'top',
                 y: 100,
                 align: 'right',
-                shadow: true
-            },
-            scrollbar: {
-                enabled: true,
-                barBackgroundColor: 'blue',
-                barBorderRadius: 7,
-                barBorderWidth: 0,
-                buttonBackgroundColor: 'blue',
-                buttonBorderWidth: 0,
-                buttonArrowColor: 'white',
-                buttonBorderRadius: 7,
-                rifleColor: 'white',
-                trackBackgroundColor: 'white',
-                trackBorderWidth: 1,
-                trackBorderColor: 'silver',
-                trackBorderRadius: 7
+                shadow: true,
+                layout: "vertical"
             },
             connectNulls: true,
             series: data
-//            series: [
-//                {
-//                    // name will be the hashtag name
-//                    name: name,
-////                    data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4]
-//                    data: data
-//                }
-//            ]
         });
     }
 };
@@ -158,90 +129,235 @@ TweetManager = {
 
 $(document).ready(function () {
 
+    // needed to stop the bootstrap carousel from automatically spinning
     $('.carousel').carousel({
         interval: false
     });
 
+    // initialize the submit button for the form to be disabled so user knows he can't click it
+    $('#submit-hashtags').find('button').prop('disabled', true);
 
-    $('#upper-limit-text').hide();
-    $('#lower-limit-text').hide();
-    $('#group1').parent().addClass("show");
-    $('#group2').parent().addClass("show");
-    $('#group3').parent().addClass("hidden");
-    $('#group4').parent().addClass("hidden");
-
-
-    $('#group1').click(function () {
-        remove_group(this);
+    // validate any time a key is pressed
+    $('form').keypress(function () {
+        validate_form();
     });
 
-    $('#group2').click(function () {
-        remove_group(this);
-    });
+    function validate_form() {
+        // hashes are alphanumeric characters
+        var hash_regex = /^[A-Za-z0-9]+$/;
 
-    $('#group3').click(function () {
-        remove_group(this);
-    });
+        var hash1 = $('#hashtag-1').val();
+        var hash2 = $('#hashtag-2').val();
+        var hash3 = $('#hashtag-3').val();
+        var hash4 = $('#hashtag-4').val();
 
-    $('#group4').click(function () {
-        remove_group(this);
-    });
+        var hash1_is_used = false;
+        var hash2_is_used = false;
+        var hash3_is_used = false;
+        var hash4_is_used = false;
 
-    $('#add-hashtag').click(function () {
-        if ($('#hashtag-fields .show').length >= 4) {
-        } else {
-            if ($('#hashtag-fields .show').length === 2) {
-                var div_to_add;
-                if ($('#group1').parent().hasClass("hidden")) {
-                    div_to_add = $('#group1');
-                } else if ($('#group2').parent().hasClass("hidden")) {
-                    div_to_add = $('#group2');
-                } else if ($('#group3').parent().hasClass("hidden")) {
-                    div_to_add = $('#group3');
-                } else if ($('#group4').parent().hasClass("hidden")) {
-                    div_to_add = $('#group4');
-                }
-                div_to_add.parent().removeClass("hidden");
-                div_to_add.parent().addClass("show");
-                $('#lower-limit-text').removeClass("show");
-                $('#lower-limit-text').addClass("hidden");
-            } else {
-                if ($('#group1').parent().hasClass("hidden")) {
-                    div_to_add = $('#group1');
-                } else if ($('#group2').parent().hasClass("hidden")) {
-                    div_to_add = $('#group2');
-                } else if ($('#group3').parent().hasClass("hidden")) {
-                    div_to_add = $('#group3');
-                } else if ($('#group4').parent().hasClass("hidden")) {
-                    div_to_add = $('#group4');
-                }
-                div_to_add.parent().removeClass("hidden");
-                div_to_add.parent().addClass("show");
-                $('#upper-limit-text').addClass("show");
-                $('#upper-limit-text').removeClass("hidden");
-                $('#add-hashtag').addClass("hidden");
-                $('#add-hashtag').removeClass("show");
-            }
+        var hash_list = [];
+
+        if ($('#group1').parent().hasClass("show") && hash_regex.test(hash1)) {
+            hash1_is_used = true;
+            hash_list = hash_list.concat([hash1]);
         }
-    });
+        if ($('#group2').parent().hasClass("show") && hash_regex.test(hash2)) {
+            hash2_is_used = true;
+            hash_list = hash_list.concat([hash2]);
 
-    function remove_group(div) {
-        if ($('#hashtag-fields .show').length === 2) {
-            $('#lower-limit-text').removeClass("hidden");
-            $('#lower-limit-text').addClass("show");
-        } else {
-            // remove the form group that contains the X that was clicked
-            $(div).parent().removeClass("show");
-            $(div).parent().addClass("hidden");
-            $('#add-hashtag').removeClass("hidden");
-            $('#add-hashtag').addClass("show");
-            $('#upper-limit-text').removeClass("show");
-            $('#upper-limit-text').addClass("hidden");
+        }
+        if ($('#group3').parent().hasClass("show") && hash_regex.test(hash3)) {
+            hash3_is_used = true;
+            hash_list = hash_list.concat([hash3]);
+
+        }
+        if ($('#group4').parent().hasClass("show") && hash_regex.test(hash4)) {
+            hash4_is_used = true;
+            hash_list = hash_list.concat([hash4]);
+
+        }
+
+        // deduping array to make sure that all hashtags entered are unique
+        var unique_hash_list = [];
+        $.each(hash_list, function (i, el) {
+            if ($.inArray(el, unique_hash_list) === -1) unique_hash_list.push(el);
+        });
+
+        var something_wrong = false;
+
+        // if the items are not unique, the success state below will not be triggered
+        var unique_text = $('#unique-hashes-text');
+        if (hash_list.length != unique_hash_list.length) {
+            something_wrong = true;
+            unique_text.removeClass("hidden");
+            unique_text.addClass("show");
+            $('#submit-hashtags').find('button').prop('disabled', true);
+        }
+
+        // 2 fields must be in use
+        var lower_limit_text = $('#lower-limit-text');
+        if ((hash1_is_used ? 1 : 0) + (hash2_is_used ? 1 : 0) + (hash3_is_used ? 1 : 0) + (hash4_is_used ? 1 : 0) < 2) {
+            unique_text.removeClass("show");
+            unique_text.addClass("hidden");
+            lower_limit_text.removeClass("hidden");
+            lower_limit_text.addClass("show");
+            $('#submit-hashtags').find('button').prop('disabled', true);
+        } else if (!something_wrong) {
+            lower_limit_text.removeClass("show");
+            lower_limit_text.addClass("hidden");
+            unique_text.removeClass("show");
+            unique_text.addClass("hidden");
+            $('#submit-hashtags').find('button').prop('disabled', false);
         }
     }
 
-    $('#confirm-start-battle').click(function () {
-        $('#confirm-start-battle').remove();
-        TweetManager.get_hashtags();
+    // when pressing enter on the form, simulate a click on the submit button
+    $(document).keypress(function (e) {
+        if (e.which == 13) {
+            $('#submit-hashtags').find('button').click();
+        }
     });
+
+    // handles clicking X near the form fields
+    $('#group1').click(function () {
+        remove_group(1);
+    });
+
+    $('#group2').click(function () {
+        remove_group(2);
+    });
+
+    $('#group3').click(function () {
+        remove_group(3);
+    });
+
+    $('#group4').click(function () {
+        remove_group(4);
+    });
+
+    function remove_group(num_form_group) {
+        if ($('#hashtag-fields').find('.show').length === 2) {
+            var lower_limit_text = $('#lower-limit-text');
+            lower_limit_text.removeClass("hidden");
+            lower_limit_text.addClass("show");
+        } else {
+            // remove the form group that contains the X that was clicked
+            var parent = $('#group' + num_form_group.toString()).parent();
+            parent.removeClass("show");
+            parent.addClass("hidden");
+            $('#hashtag-' + num_form_group.toString()).val("");
+            var add_tag = $('#add-hashtag');
+            add_tag.removeClass("hidden");
+            add_tag.addClass("show");
+            var upper_limit_text = $('#upper-limit-text');
+            upper_limit_text.removeClass("show");
+            upper_limit_text.addClass("hidden");
+        }
+    }
+
+    // handles clicking "Add new Hashtag"
+    $('#add-hashtag').click(function () {
+        if ($('#hashtag-fields').find('.show').length < 4) {
+            var group1 = $('#group1');
+            if ($('#hashtag-fields').find('.show').length === 2) {
+                var div_to_add;
+                if (group1.parent().hasClass("hidden")) {
+                    div_to_add = group1;
+                } else if ($('#group2').parent().hasClass("hidden")) {
+                    div_to_add = $('#group2');
+                } else if ($('#group3').parent().hasClass("hidden")) {
+                    div_to_add = $('#group3');
+                } else if ($('#group4').parent().hasClass("hidden")) {
+                    div_to_add = $('#group4');
+                }
+                div_to_add.parent().removeClass("hidden");
+                div_to_add.parent().addClass("show");
+                var lower = $('#lower-limit-text');
+                lower.removeClass("show");
+                lower.addClass("hidden");
+            } else {
+                if (group1.parent().hasClass("hidden")) {
+                    div_to_add = group1;
+                } else if ($('#group2').parent().hasClass("hidden")) {
+                    div_to_add = $('#group2');
+                } else if ($('#group3').parent().hasClass("hidden")) {
+                    div_to_add = $('#group3');
+                } else if ($('#group4').parent().hasClass("hidden")) {
+                    div_to_add = $('#group4');
+                }
+                div_to_add.parent().removeClass("hidden");
+                div_to_add.parent().addClass("show");
+            }
+        } else {
+            var upper = $('#upper-limit-text');
+            upper.addClass("show");
+            upper.removeClass("hidden");
+            var add_tag = $('#add-hashtag');
+            add_tag.addClass("hidden");
+            add_tag.removeClass("show");
+        }
+    });
+
+
+
+    // true when battle.html is loaded
+    if ($('#battle-title').length) {
+
+        // display a modal with the results of the hashtag battle
+        $('#end-battle-btn').click(function () {
+            var winners = [
+                ["", 0]
+            ];
+            for (var i = 0; i < TweetManager.hashtags.length; i++) {
+                var counter = $('#c' + i.toString());
+                var num_tweets = parseInt(counter.html(), 10);
+                if (winners.length > 1) {
+                    if (num_tweets > winners[0][1]) {
+                        winners = [
+                            [TweetManager.hashtags[i], num_tweets]
+                        ];
+                    } else if (num_tweets === winners[0][1]) {
+                        winners = winners.concat([
+                            [TweetManager.hashtags[i], num_tweets]
+                        ]);
+                    }
+                } else {
+                    if (num_tweets > winners[0][1]) {
+                        winners[0] = [TweetManager.hashtags[i], num_tweets];
+                    } else if (num_tweets > 0 && num_tweets === winners[0][1]) {
+                        winners = winners.concat([
+                            [TweetManager.hashtags[i], num_tweets]
+                        ]);
+                    }
+                }
+            }
+
+            if (winners.length === 1) {
+                if (winners[0][0] === "") {
+                    $('#battle-modal-content').html('<h3>No winners</h3>' +
+                        '<p>These hashtags have not been tagged in any tweets yet :(</p>');
+                } else {
+                    $('#battle-modal-content').html('<h3>#' + winners[0][0] + ' is the winner!</h3>' +
+                        '<p>tagged in ' + winners[0][1] + ' tweets</p>');
+                }
+            } else {
+                var tied_winners = "";
+                for (var k = 0; k < winners.length; k++) {
+                    if (k === winners.length - 1) {
+                        tied_winners = tied_winners.concat("#" + winners[k][0]);
+                    } else {
+                        tied_winners = tied_winners.concat("#" + winners[k][0] + ", ");
+                    }
+                }
+                $('#battle-modal-content').html('<h3>' + tied_winners + '</h3>' +
+                    '<p>are all winners, tagged in ' + winners[0][1] + ' tweets</p>');
+            }
+        });
+
+        // start off the ajax requests by retrieving the hashtags
+        setTimeout(function () {
+            TweetManager.get_hashtags();
+        }, 100);
+    }
 });

@@ -2,15 +2,17 @@
 {% block content %}
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-4 col-md-offset-4">
+            <div class="col-md-8 col-md-offset-2">
                 <div class="container-fluid">
                     <div class="row">
                         <h1 id="title">Hash Battle!</h1>
+
+                        <p id="app-explanation">enter up to 4 hashtags to enter them into the battle</p>
                     </div>
                     <div class="row">
                         <form class="form-horizontal" role="form" action="/set_hashtags/" method="get">
                             <div id="hashtag-fields">
-                                <div class="form-group">
+                                <div class="form-group show">
                                     <label for="hashtag-1" class="col-xs-2 control-label">Hashtag#</label>
 
                                     <div class="col-xs-9">
@@ -20,7 +22,7 @@
                                     <a href="#" id="group1" class="col-xs-1 remove-hashtag" data-toggle="tooltip"
                                        data-placement="top" title="Remove from battle">X</a>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group show">
                                     <label for="hashtag-2" class="col-xs-2 control-label">Hashtag#</label>
 
                                     <div class="col-xs-9">
@@ -29,7 +31,7 @@
                                     </div>
                                     <a href="#" id="group2" class="col-xs-1 remove-hashtag" data-toggle="tooltip"
                                        data-placement="top" title="Remove from battle">X</a></div>
-                                <div class="form-group">
+                                <div class="form-group hidden">
                                     <label for="hashtag-3" class="col-xs-2 control-label">Hashtag#</label>
 
                                     <div class="col-xs-9">
@@ -38,7 +40,7 @@
                                     </div>
                                     <a href="#" id="group3" class="col-xs-1 remove-hashtag" data-toggle="tooltip"
                                        data-placement="top" title="Remove from battle">X</a></div>
-                                <div class="form-group">
+                                <div class="form-group hidden">
                                     <label for="hashtag-4" class="col-xs-2 control-label">Hashtag#</label>
 
                                     <div class="col-xs-9">
@@ -51,11 +53,51 @@
                             <div id="add-hashtag" class="col-sm-10 col-sm-offset-2">
                                 <a href="#">+ Add Another Hashtag to the battle</a>
                             </div>
-                            <p id="lower-limit-text" class="help-block col-sm-10 col-sm-offset-2">There must be at least 2 hashtags in the battle</p>
-                            <p id="upper-limit-text" class="help-block col-sm-10 col-sm-offset-2">Sorry! Hash Battle supports up to 4 hashtags for now</p>
-                            <div id="submit-hashtags" class="form-group">
+                            <p id="lower-limit-text" class="help-block col-sm-10 col-sm-offset-2 hidden">There must be
+                                at least
+                                2 unique hashtags in the battle</p>
+
+                            <p id="upper-limit-text" class="help-block col-sm-10 col-sm-offset-2 hidden">Sorry! Hash
+                                Battle
+                                supports up to 4 hashtags for now</p>
+
+                            <p id="unique-hashes-text" class="help-block col-sm-10 col-sm-offset-2 hidden">All hashtags
+                                entered
+                                must be unique</p>
+
+                            <div id="submit-hashtags">
                                 <div class="col-sm-offset-2 col-sm-10">
-                                    <button type="submit" class="btn btn-default">Submit</button>
+                                    <button type="button" class="btn btn-default" data-toggle="modal"
+                                            data-target="#confirm-modal">Start Battle
+                                    </button>
+                                </div>
+                            </div>
+
+
+                            <!--  Begin Battle Modal -->
+                            <div class="modal fade" id="confirm-modal" tabindex="-1" role="dialog"
+                                 aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div id="homepage-modal" class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                    aria-hidden="true">&times;</button>
+                                        </div>
+                                        <div id="homepage-modal-content" class="modal-body">
+                                            <p>Are you ready to begin the battle??</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button id="dismiss-modal" type="button" class="btn btn-default"
+                                                    data-dismiss="modal">Let me
+                                                make some changes
+                                            </button>
+                                            <div class="form-group" id="confirm-start-battle">
+                                                <button type="submit" class="btn btn-primary" data-toggle="modal"
+                                                        data-target="#confirm-modal">Begin the Battle
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

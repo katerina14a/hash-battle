@@ -42,7 +42,6 @@ INSTALLED_APPS = (
     'twython_django_oauth',
     'djcelery',
     'kombu.transport.django',
-    # 'app.hashbattle',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -118,14 +117,10 @@ TWITTER_SECRET = 'OwaDRLufUYqa1eWfwxp9hshPMptXOZuyzKmobdgqpsBeX3jjtO'
 
 LOGIN_URL = '/login'
 LOGOUT_URL = '/logout'
-LOGIN_REDIRECT_URL = '/battle'
-LOGOUT_REDIRECT_URL = '/'
-
-# CELERY_RESULT_BACKEND = 'djcelery.backends.cache:CacheBackend'
+LOGIN_REDIRECT_URL = '/home'
+LOGOUT_REDIRECT_URL = '/home'
 
 CELERY_TASK_SERIALIZER = "json"
-
-# CELERY_IMPORTS = ("tasks",)
 
 BROKER_URL = 'amqp://guest:guest@localhost//'
 
@@ -138,5 +133,6 @@ CACHES = {
     }
 }
 
+# DEVELOPMENT set to 1 on local machine, otherwise use production settings
 if os.environ.get('DEVELOPMENT', None):
     from settings_dev import *
