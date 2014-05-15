@@ -1,7 +1,6 @@
 import json
 import re
 from app.settings import LOGOUT_REDIRECT_URL
-import os
 from django.core.cache import cache
 from django.shortcuts import render_to_response
 from app.celery import save_tweets
@@ -22,6 +21,8 @@ User = get_user_model()
 from twython_django_oauth.models import TwitterProfile
 
 def set_hashtags(request):
+
+    cache.delete("stop:tasks")
 
     # TODO: handle less than 2 hashes
     hash1 = ""
@@ -165,7 +166,15 @@ def home(request):
     return render_to_response('home.html')
 
 def end_battle(request):
-    # shutdown celery workers
-    bash_command = "ps auxww | grep 'celery' | awk '{print $2}' | xargs kill -9"
-    os.system(bash_command)
+    # shutdown tasks
+    if cache.add("lock:hashtaglock", "1", 300):
+        try:
+            cache.add("stop:tasks", "1")
+        finally:
+            cache.delete("lock:hashtaglock")
+    else:
+        pass
+
+    # bash_command = "ps auxww | grep 'celery' | awk '{print $2}' | xargs kill -9"
+    # os.system(bash_command)
     return HttpResponseRedirect(request.build_absolute_uri(LOGOUT_REDIRECT_URL))

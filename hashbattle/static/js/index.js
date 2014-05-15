@@ -59,7 +59,6 @@ TweetManager = {
                         var counter = $('#c' + id);
                         counter.html(parseInt(counter.html(), 10) + 1);
                         num_new_plot_points += 1;
-
                     }
                 }
 
@@ -85,7 +84,7 @@ TweetManager = {
                 // recursive call so worker keeps getting more tweets from cache
                 setTimeout(function () {
                     TweetManager.get_new_tweet(hash, id);
-                }, 5000);
+                }, 2000);
             },
             error: function () {
                 console.log("an error has occurred and we have stopped looking for tweets :( ")

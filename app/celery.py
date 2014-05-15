@@ -35,11 +35,13 @@ def save_tweets(hashtag, token, secret):
     # r = api.request('statuses/filter', {'track': hashtag})
 
     for item in r:
-        # print item['text'] if 'text' in item else item
+        print item['text'] if 'text' in item else item
 
         # using memcached as a locking mechanism
         if cache.add("lock:hashtaglock", "1", 300):
             try:
+                if cache.get("stop:tasks") == "1":
+                    break
                 if cache.get(hashtag) is not None:
                     tmp_list = cache.get(hashtag)
                     tmp_list.append(item['text'] if 'text' in item else item)
@@ -50,8 +52,8 @@ def save_tweets(hashtag, token, secret):
                     cache.set(hashtag, tweets, 604800)
             finally:
                 cache.delete("lock:hashtaglock")
-                # print hashtag + ': ' + str(len(cache.get(hashtag)))
-                # print 'cache is taking up ' + str(sys.getsizeof(cache)/(1024.0*1024.0)) + 'MB'
+                print hashtag + ': ' + str(len(cache.get(hashtag)))
+                print 'cache is taking up ' + str(sys.getsizeof(cache)/(1024.0*1024.0)) + 'MB'
         else:
             # log this
             pass
