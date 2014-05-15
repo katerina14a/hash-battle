@@ -1,1 +1,2 @@
 web: gunicorn app.wsgi
+celery: python manage.py celeryd -c 3
