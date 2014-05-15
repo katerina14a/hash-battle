@@ -22,7 +22,9 @@ TweetManager = {
                 }
 
                 for (var i = 0; i < TweetManager.hashtags.length; i++) {
-                    $('#tweets').append('<div id="t' + i + '" class="col-xs-' + span + ' tweets"></div>');
+                    $('#tweets').append('<div id="t' + i + '" class="col-xs-' + span + ' tweets">' +
+                        '<p id="placeholder' + i + '" class="tweet-placeholder">waiting for tweets to come in...</p>' +
+                        '</div>');
 
                     $('#counters').append('<div id="counter' + i + '" class="col-xs-' + span + ' counter">' +
                         '<h2>#' + TweetManager.hashtags[i] + '</h2>' +
@@ -51,10 +53,11 @@ TweetManager = {
             },
             success: function (data) {
 
-                // increase counter and add tweet to stream
+                // increase counter, remove placeholder, and add tweet to stream
                 var num_new_plot_points = 0;
                 for (var i = 0; i < Object.keys(data).length; i++) {
                     if (data[hash + i.toString()] != '') {
+                        $("#placeholder" + id).remove();
                         $("#t" + id).prepend('<p class="tweet">' + data[hash + i.toString()] + '</p>');
                         var counter = $('#c' + id);
                         counter.html(parseInt(counter.html(), 10) + 1);

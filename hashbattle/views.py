@@ -24,7 +24,6 @@ def set_hashtags(request):
 
     cache.delete("stop:tasks")
 
-    # TODO: handle less than 2 hashes
     hash1 = ""
     hash2 = ""
     hash3 = ""
@@ -52,6 +51,12 @@ def set_hashtags(request):
         hash4 = re.sub('[^0-9a-zA-Z]+', '', hash4)
         request.session['hashes'].append(hash4)
 
+    # remove empty string elements to make sure there are at least hashes
+    a = [hash1, hash2, hash3, hash4]
+    a = [x for x in a if x != '']
+    if len(a) < 2:
+        return render_to_response('home.html')
+
     # get user data to be able to make the twitter api request
     user = request.user.twitterprofile
     token = user.oauth_token
@@ -77,7 +82,6 @@ def set_hashtags(request):
 def fetch_hashtags(request):
     response = {"hashtags": []}
     hashes = request.session.get('hashes')
-    # TODO: if hashes = [], take them back to homepage to enter in the hashes again (error with session)
     for i in range(0, len(hashes)):
         response["hashtags"].append(hashes[i])
     return HttpResponse(json.dumps(response), content_type="application/json")
