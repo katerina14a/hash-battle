@@ -133,6 +133,9 @@ CACHES = {
     }
 }
 
+
+DEBUG = True
+
 # DEVELOPMENT set to 1 on local machine, otherwise use production settings
 if os.environ.get('DEVELOPMENT', None):
     from settings_dev import *
