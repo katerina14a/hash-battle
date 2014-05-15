@@ -1,1 +1,1 @@
-web: gunicorn app.wsgi
+web: honcho -f ProcfileHoncho start
